@@ -1,44 +1,58 @@
 from flask import Flask 
 from flask_sqlalchemy import SQLAlchemy
-import os
+from flask import request
 
 app = Flask(__name__)
+
 
 app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///data.db'
 db = SQLAlchemy(app)
 
 class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    book_name = db.Column(db.String(80), unique=True, nullable=False)
+    name = db.Column(db.String(80), unique=True, nullable=False)
     author = db.Column(db.String(80)) 
     publisher = db.Column(db.String(80))
 
     def __repr__(self):
-        return f'{self.book_name - self.author - self.publisher}'
-    
-    def make_book():
-        book_name1 = input("Enter book name")
-        author1 = input("Enter aithor")
-        publisher1 = input("Enter publisher")
-        book = Book(book_name= book_name1, author=author1, publisher=publisher1)
-
-        # Add the book to the session
-        db.session.add(book)
-
-        # Commit the session to save to the database
-        db.session.commit()
-
-
-print("Current Working Directory:", os.getcwd())
+        return f'{self.name - self.author - self.publisher}'
 
 with app.app_context():
     db.create_all()
     print("Database tables created!")
 
-    Book.make_book()
-
 @app.route('/')
 def index():
-    return "hello"  
+    return "hello" 
 
+@app.route('/books')
+def get_books():
+    books = Book.query.all()
+    output = []
+    for book in books:
+        book_data = {'name': book.name, 'author': book.author} 
+        output.append(book_data)
+    
+    return {"books": output}
 
+@app.route('/books/<id>')
+def get_book(id):
+    book = Book.query.get_or_404(id)
+    return {"name": book.name, "author": book.author}
+
+@app.route('/drinks', methods=['POST'])
+def add_drink():
+    book = Book(name=request.json['name'],
+                author=request.json['description'])
+    db.session.add(book)
+    db.session.commit()
+    return {'id':book.id}
+
+@app.route('/books/<id>', methods=['DELETE'])
+def delete_book(id):
+    book = Book.query.get(id)
+    if book is None:
+        return {'error':'not found'}
+    db.session.delete(book)
+    db.session.commit()
+    return {'message': 'yeet!@'}
