@@ -40,8 +40,8 @@ def get_book(id):
     book = Book.query.get_or_404(id)
     return {"name": book.name, "author": book.author}
 
-@app.route('/drinks', methods=['POST'])
-def add_drink():
+@app.route('/books', methods=['POST'])
+def add_book():
     book = Book(name=request.json['name'],
                 author=request.json['description'])
     db.session.add(book)
